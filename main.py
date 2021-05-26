@@ -89,7 +89,14 @@ def LRGradient(w, X, C):
 
 
 def LRHessian(X, w):
-    print("f")
+    m = len(C[0])
+    elementWise = np.multiply(LRsigmuind(X.T, w), (1 - LRsigmuind(X.T, w)))
+    n = len(X)
+    m = len(X[0])
+    D = np.zeros((len(elementWise),len(elementWise)))
+    for i in range (len(elementWise)):
+        D[i][i] = elementWise[i]
+    return (1/m) * X @ D @ X.T
 
 
 if __name__ == '__main__':
@@ -137,8 +144,7 @@ if __name__ == '__main__':
         w = np.asarray([[2],
                         [2],
                         [2]])
-        print(LRGradient(w, X, C))
+        section_a = [LRobjective(w, X, C), LRGradient(w, X, C), LRHessian(X, w)]
         # x:nxm -> x.T:mxn  -> sig: mxn @ nx? -> where n=number of rows
         print(f'-----Q4 end-----')
 
-        noga - shut up it works
