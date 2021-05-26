@@ -1,3 +1,5 @@
+import math
+
 import numpy as np
 from scipy import sparse as sparse
 import matplotlib.pyplot as plt
@@ -66,9 +68,34 @@ def coronaDataToVector(path):
     return vectorArray
 
 
+def LRsigmuind(XT, W):
+    matrix_mul = -XT @ W
+    return 1 / (1 + np.exp(matrix_mul))
+
+
+def LRobjective(w, X, C):
+    m = len(C[0])
+    c1 = C[0].T
+    c2 = C[1].T
+    res = (-1 / m) * ((c1.T * np.log(LRsigmuind(X.T, w))) + (c2.T * np.log(1 - LRsigmuind(X.T, w))))
+    return res
+
+
+def LRGradient(w, X, C):
+    m = len(C[0])
+    c1 = C[0].T
+    res = (1 / m) * X @ (LRsigmuind(X.T, w) - c1)
+    return res
+
+
+def LRHessian(X, w):
+    print("f")
+
+
 if __name__ == '__main__':
     Q2 = False
-    Q3 = True
+    Q3 = False
+    Q4 = True
 
     if (Q2):
         print(f'-------Q2:------')
@@ -99,3 +126,17 @@ if __name__ == '__main__':
         print(f'-------Q3:------')
         print(coronaDataToVector('./Covid-19-USA.txt'))
         print(f'-----Q3 end-----')
+
+    if (Q4):
+        print(f'-------Q4:------')
+        X = np.asarray([[1, 2],
+                        [1, 2],
+                        [1, 2]])
+        C = np.asarray([[1, 1, 0],
+                        [0, 0, 1]])
+        w = np.asarray([[2],
+                        [2],
+                        [2]])
+        print(LRGradient(w, X, C))
+        # x:nxm -> x.T:mxn  -> sig: mxn @ nx? -> where n=number of rows
+        print(f'-----Q4 end-----')
