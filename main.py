@@ -87,6 +87,11 @@ def LRGradient(w, X, C):
     res = (1 / m) * X @ (LRsigmuind(X.T, w) - c1)
     return res
 
+def unitVectorGenerator(n):
+
+    v = np.random.randn(n)
+    normalized_V = v/np.linalg.norm(v)
+    return normalized_V
 
 def LRHessian(X, w):
     m = len(C[0])
@@ -139,12 +144,21 @@ if __name__ == '__main__':
         X = np.asarray([[1, 2],
                         [1, 2],
                         [1, 2]])
+        #TODO Import  X
         C = np.asarray([[1, 1, 0],
                         [0, 0, 1]])
+        #TODO Import
         w = np.asarray([[2],
                         [2],
                         [2]])
+        #TODO Import w
         section_a = [LRobjective(w, X, C), LRGradient(w, X, C), LRHessian(X, w)]
         # x:nxm -> x.T:mxn  -> sig: mxn @ nx? -> where n=number of rows
+        #TODO loop through different epsilons, and show the diff (for grad test)
+        d = unitVectorGenerator(len(w))
+        plt.figure(abs(LRobjective(w+0.01*d ,X , C))-section_a[0])
+        plt.plot()
+        plt.plot(xIRLS)
+        plt.show()
         print(f'-----Q4 end-----')
 
