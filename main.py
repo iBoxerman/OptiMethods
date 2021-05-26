@@ -21,7 +21,7 @@ def IRLS(f, x, y, G, n, lam, epsilon):
     A = np.eye(size)
     b = y
     G = sparseToArray(G)
-    W = np.eye(size-1)
+    W = np.eye(size - 1)
 
     for k in range(0, n - 1):
         # solve x
@@ -54,26 +54,48 @@ def fForVector(x):
     return f
 
 
-if __name__ == '__main__':
-    # init - given
-    x = np.arange(0, 5, 0.01)
-    n = np.size(x)
-    one = int(n / 5)
-    f = fForVector(x)
-    G = sparse.spdiags([[-np.ones(n - 1)], [np.ones(n)]], [-1, 0], n, n)
-    G = sparse.spdiags([-np.ones(n), np.ones(n)], np.array([0, 1]), n-1, n).toarray()
-    etta = 0.1 * np.random.randn(np.size(x))
-    y = f + etta
-    plt.figure()
-    plt.plot(x, y)
-    plt.plot(x, f)
-    plt.show()
+def coronaDataToVector(path):
+    vectorTuple = []
+    with open(path, encoding="utf-8") as coronaData:
+        row = coronaData.readline()
+        while row != "":
+            row = row.removesuffix('\n')
+            vectorTuple.append(int(row))
+            row = coronaData.readline()
+    vectorArray = np.asarray(vectorTuple)
+    return vectorArray
 
-    print(f'-------Q2:------')
-    xLS = Q2a(y, G)
-    xIRLS = IRLS(f, x, y, G, 10, 1, 0.001)
-    plt.figure()
-    plt.plot(xLS)
-    plt.plot(xIRLS)
-    plt.show()
-    print(f'-----Q2 end-----')
+
+if __name__ == '__main__':
+    Q2 = False
+    Q3 = True
+
+    if (Q2):
+        print(f'-------Q2:------')
+        # init - given
+        x = np.arange(0, 5, 0.01)
+        n = np.size(x)
+        one = int(n / 5)
+        f = fForVector(x)
+        G = sparse.spdiags([[-np.ones(n - 1)], [np.ones(n)]], [-1, 0], n, n)
+        G = sparse.spdiags([-np.ones(n), np.ones(n)], np.array([0, 1]), n - 1, n).toarray()
+        etta = 0.1 * np.random.randn(np.size(x))
+        y = f + etta
+        plt.figure()
+        plt.plot(x, y)
+        plt.plot(x, f)
+        plt.show()
+
+        # our part
+        xLS = Q2a(y, G)
+        xIRLS = IRLS(f, x, y, G, 10, 1, 0.001)
+        plt.figure()
+        plt.plot(xLS)
+        plt.plot(xIRLS)
+        plt.show()
+        print(f'-----Q2 end-----')
+
+    if (Q3):
+        print(f'-------Q3:------')
+        print(coronaDataToVector('./Covid-19-USA.txt'))
+        print(f'-----Q3 end-----')
