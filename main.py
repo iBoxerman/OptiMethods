@@ -140,3 +140,5 @@ if __name__ == '__main__':
         print(LRGradient(w, X, C))
         # x:nxm -> x.T:mxn  -> sig: mxn @ nx? -> where n=number of rows
         print(f'-----Q4 end-----')
+
+        noga - shut up it works
