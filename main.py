@@ -73,25 +73,24 @@ def LRsigmuind(XT, w):
 
 def LRobjective(w, X, C):
     m = len(C[0])
-    c1 = C[0].T
-    c2 = C[1].T
-    res = (-1 / m) * ((c1.T * np.log(LRsigmuind(X.T, w))) + (c2.T * np.log(1 - LRsigmuind(X.T, w))))
-    return res
+    c1 = C[:, [0]]
+    c2 = C[:, [1]]
+    print(c1)
+    res = (-1 / m) * ((c1.T @ np.log(LRsigmuind(X.T, w))) + (c2.T @ np.log(1 - LRsigmuind(X.T, w))))
+    return res[0][0]
 
 
 def LRGradient(w, X, C):
     m = len(C[0])
-    c1 = C[0].T
-
-    print(f'is this vector?:{LRsigmuind(X.T, w)}\n{c1}')
+    c1 = C[:, [0]]
     res = (1 / m) * X @ (LRsigmuind(X.T, w) - c1)
     return res
 
 
 def unitVectorGenerator(vecSize):
-    v = np.random.randn(vecSize)
+    v = np.asarray([np.random.randn(vecSize)])
     normalized_V = v / np.linalg.norm(v)
-    return normalized_V
+    return normalized_V.T
 
 
 def LRHessian(X, w):
@@ -102,18 +101,43 @@ def LRHessian(X, w):
         D[i][i] = elementWise[i]
     return (1 / m) * X @ D @ X.T
 
-def gradTest(f,X, gradX):
-    d = unitVectorGenerator(len(X))
-    epsilons = [0.001, 0.00000001]
+
+def gradTest(f, X, gradX, sampleVec):
+    d = sampleVec
+    epsilons = []
+    for i in range(1, 90):
+        # epsilons.append(0.0015*i)
+        epsilons.append(0.1 * i)
+    # epsilons = [1,2,3,4,5]*0.1
+    print(epsilons)
     Oone = lambda epsilon: abs(f(X + epsilon * d) - f(X))
-    Otwo = lambda epsilon: abs( f(X + epsilon * d) - f(X) - epsilon * d.T @ gradX)
+    print(gradX)
+    Otwo = lambda epsilon: abs(f(X + epsilon * d) - f(X) - epsilon * d.T @ gradX)[0][0]
+    ones = []
+    twos = []
+
+    for i in range(len(epsilons)):
+        ones.append(Oone(epsilons[i]))
+        twos.append(Otwo(epsilons[i]))
+
     plt.figure()
-    plt.plot(Oone(epsilons[0]),Oone(epsilons[1]))
-    plt.plot(Otwo(epsilons[1]),Otwo(epsilons[1]))
+    plt.title("g=|f(x+e*d) - f(x)|")
+    plt.xlabel("epsilons")
+    plt.ylabel("g(e)")
+    plt.plot(epsilons[:], ones)
+
+    plt.figure()
+    plt.title("g=|f(x+e*d) - f(x)- e * d.T @ grad(x)|")
+    plt.xlabel("epsilons")
+    plt.ylabel("g(e)")
+    plt.plot(epsilons[:], twos)
+    # plt.legend(["ones", "twos"])
     plt.show()
 
-def hessianTest(gradFunc, hesFunc, x):
+
+def hessianTest(gradFunc, hesFunc, x, sampleVec):
     print("")
+
 
 if __name__ == '__main__':
     Q2 = False
@@ -156,12 +180,23 @@ if __name__ == '__main__':
                         [1, 2],
                         [1, 2]])
         # TODO Import  X
-        C = np.asarray([[1, 1, 0],
-                        [0, 0, 1]])
+        C = np.asarray([[1, 0],
+                        [0, 1]])
         # TODO Import
         w = np.asarray([[2],
                         [2],
                         [2]])
+
+        X = np.asarray([[1, 2, 4, 8, 16],
+                        [1, 2, 4, 8, 16],
+                        [1, 2, 4, 1, 1]])
+        # TODO Import  X
+        C = np.asarray([[1, 1, 1, 0, 0],
+                        [0, 0, 0, 1, 1]])
+        # TODO Import
+        w = np.asarray([[3],
+                        [3],
+                        [3]])
         # TODO Import w
         section_a = [LRobjective(w, X, C), LRGradient(w, X, C), LRHessian(X, w)]
         f = lambda x: LRobjective(w,x,C)
