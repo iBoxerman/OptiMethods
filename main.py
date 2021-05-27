@@ -66,8 +66,8 @@ def coronaDataToVector(path):
     return vectorArray
 
 
-def LRsigmuind(XT, W):
-    matrix_mul = -XT @ W
+def LRsigmuind(XT, w):
+    matrix_mul = -XT @ w
     return 1 / (1 + np.exp(matrix_mul))
 
 
@@ -82,6 +82,8 @@ def LRobjective(w, X, C):
 def LRGradient(w, X, C):
     m = len(C[0])
     c1 = C[0].T
+
+    print(f'is this vector?:{LRsigmuind(X.T, w)}\n{c1}')
     res = (1 / m) * X @ (LRsigmuind(X.T, w) - c1)
     return res
 
@@ -91,13 +93,24 @@ def unitVectorGenerator(vecSize):
     normalized_V = v / np.linalg.norm(v)
     return normalized_V
 
+
 def LRHessian(X, w):
     elementWise = np.multiply(LRsigmuind(X.T, w), (1 - LRsigmuind(X.T, w)))
     m = len(X[0])
-    D = np.zeros((len(elementWise),len(elementWise)))
-    for i in range (len(elementWise)):
+    D = np.zeros((len(elementWise), len(elementWise)))
+    for i in range(len(elementWise)):
         D[i][i] = elementWise[i]
-    return (1/m) * X @ D @ X.T
+    return (1 / m) * X @ D @ X.T
+
+def gradTest(f,X, gradX):
+    d = unitVectorGenerator(len(X))
+    epsilons = [0.001, 0.00000001]
+    Oone = lambda epsilon: abs(f(X + epsilon * d) - f(X))
+    Otwo = lambda epsilon: abs( f(X + epsilon * d) - f(X) - epsilon * d.T @ gradX)
+    plt.figure()
+    plt.plot(Oone(epsilons[0]),Oone(epsilons[1]))
+    plt.plot(Otwo(epsilons[1]),Otwo(epsilons[1]))
+    plt.show()
 
 def hessianTest(gradFunc, hesFunc, x):
     print("")
@@ -142,21 +155,16 @@ if __name__ == '__main__':
         X = np.asarray([[1, 2],
                         [1, 2],
                         [1, 2]])
-        #TODO Import  X
+        # TODO Import  X
         C = np.asarray([[1, 1, 0],
                         [0, 0, 1]])
-        #TODO Import
+        # TODO Import
         w = np.asarray([[2],
                         [2],
                         [2]])
-        #TODO Import w
+        # TODO Import w
         section_a = [LRobjective(w, X, C), LRGradient(w, X, C), LRHessian(X, w)]
-        # x:nxm -> x.T:mxn  -> sig: mxn @ nx? -> where n=number of rows
-        #TODO loop through different epsilons, and show the diff (for grad test)
-        d = unitVectorGenerator(len(w))
-        plt.figure(abs(LRobjective(w+0.01*d ,X , C))-section_a[0])
-        plt.plot()
-        plt.plot(xIRLS)
-        plt.show()
+        f = lambda x: LRobjective(w,x,C)
+        # TODO loop through different epsilons, and show the diff (for grad test)
+        gradTest(f,X,section_a[1])
         print(f'-----Q4 end-----')
-
