@@ -1,5 +1,3 @@
-import math
-
 import numpy as np
 from scipy import sparse as sparse
 import matplotlib.pyplot as plt
@@ -87,22 +85,22 @@ def LRGradient(w, X, C):
     res = (1 / m) * X @ (LRsigmuind(X.T, w) - c1)
     return res
 
-def unitVectorGenerator(n):
 
-    v = np.random.randn(n)
-    normalized_V = v/np.linalg.norm(v)
+def unitVectorGenerator(vecSize):
+    v = np.random.randn(vecSize)
+    normalized_V = v / np.linalg.norm(v)
     return normalized_V
 
 def LRHessian(X, w):
-    m = len(C[0])
     elementWise = np.multiply(LRsigmuind(X.T, w), (1 - LRsigmuind(X.T, w)))
-    n = len(X)
     m = len(X[0])
     D = np.zeros((len(elementWise),len(elementWise)))
     for i in range (len(elementWise)):
         D[i][i] = elementWise[i]
     return (1/m) * X @ D @ X.T
 
+def hessianTest(gradFunc, hesFunc, x):
+    print("")
 
 if __name__ == '__main__':
     Q2 = False
