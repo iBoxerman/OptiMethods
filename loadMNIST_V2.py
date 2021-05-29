@@ -23,6 +23,7 @@ class MnistDataloader(object):
     
     def read_images_labels(self, images_filepath, labels_filepath):        
         labels = []
+        print(labels_filepath)
         with open(labels_filepath, 'rb') as file:
             magic, size = struct.unpack(">II", file.read(8))
             if magic != 2049:

@@ -1,7 +1,13 @@
+import math
+from datetime import time
+
 import numpy as np
 from scipy import sparse as sparse
 import matplotlib.pyplot as plt
 import numpy.linalg as alg
+
+import loadMNIST
+import loadMNIST_V2
 
 
 def regularLSforQ2a(A, b, lam, G):
@@ -66,24 +72,38 @@ def coronaDataToVector(path):
     return vectorArray
 
 
-def LRsigmuind(XT, w):
+def sigmoid(XT, w):
     matrix_mul = -XT @ w
-    return 1 / (1 + np.exp(matrix_mul))
+    return 1.0 / (1.0 + np.exp(matrix_mul))
 
 
 def LRobjective(w, X, C):
     m = len(C[0])
-    c1 = C[:, [0]]
-    c2 = C[:, [1]]
-    print(c1)
-    res = (-1 / m) * ((c1.T @ np.log(LRsigmuind(X.T, w))) + (c2.T @ np.log(1 - LRsigmuind(X.T, w))))
-    return res[0][0]
+    c1 = np.asarray([C[0]])
+    # print(f'c1:\n{c1} \n')
+
+    c2 = np.asarray([C[1]])
+
+    print(f'sigmoid:{(sigmoid(X.T, w))} \n')
+    oneVec = np.asarray([[1], [1], [1], [1], [1]])
+    print(f' 1- sig = {1.0 - (sigmoid(X.T, w))}')
+    print(f' 1- sig with vec = {oneVec - (sigmoid(X.T, w))}')
+    print(f'log:\n{np.log(1.0 - sigmoid(X.T, w))}  ')
+
+    # print(f'c1.T:\n{c1} ')
+    print(f'!!!!!!:\n{c2 @ np.log(1 - sigmoid(X.T, w))} \n ')
+
+    res = (-1 / m) * ((c1 @ np.log(sigmoid(X.T, w))) + (c2 @ np.log(1 - sigmoid(X.T, w))))
+    print(f'result:\n{res}\n')
+    return res[0]
 
 
 def LRGradient(w, X, C):
     m = len(C[0])
-    c1 = C[:, [0]]
-    res = (1 / m) * X @ (LRsigmuind(X.T, w) - c1)
+    c1 = np.asarray([C[0]])
+    print(f' grad, c = {c1.T}')
+    res = (1 / m) * X @ (sigmoid(X.T, w) - c1.T)
+    print(f'res = {res}')
     return res
 
 
@@ -93,9 +113,8 @@ def unitVectorGenerator(vecSize):
     return normalized_V.T
 
 
-def LRHessian(X, w):
-    elementWise = np.multiply(LRsigmuind(X.T, w), (1 - LRsigmuind(X.T, w)))
-    m = len(X[0])
+def LRHessian(X, w, m):
+    elementWise = np.multiply(sigmoid(X.T, w), (1 - sigmoid(X.T, w)))
     D = np.zeros((len(elementWise), len(elementWise)))
     for i in range(len(elementWise)):
         D[i][i] = elementWise[i]
@@ -108,8 +127,8 @@ def gradTest(f, X, gradX, sampleVec):
     for i in range(1, 90):
         # epsilons.append(0.0015*i)
         epsilons.append(0.1 * i)
-    # epsilons = [1,2,3,4,5]*0.1
-    print(epsilons)
+    epsilons = [1]
+    # print(epsilons)
     Oone = lambda epsilon: abs(f(X + epsilon * d) - f(X))
     print(gradX)
     Otwo = lambda epsilon: abs(f(X + epsilon * d) - f(X) - epsilon * d.T @ gradX)[0][0]
@@ -137,6 +156,36 @@ def gradTest(f, X, gradX, sampleVec):
 
 def hessianTest(gradFunc, hesFunc, x, sampleVec):
     print("")
+
+
+def load(n_pictures):
+    # valid input
+    if n_pictures > 60000 | n_pictures == 0:
+        print(f'number of picture is {n_pictures}>60000 or 0')
+        return
+
+    # loading data from MNIST
+    loader = loadMNIST_V2.MnistDataloader("./dataset/MNIST/train-images.idx3-ubyte",
+                                          "./dataset/MNIST/train-labels.idx1-ubyte",
+                                          "./dataset/MNIST/t10k-images.idx3-ubyte",
+                                          "./dataset/MNIST/t10k-labels.idx1-ubyte")
+    imageData = np.asarray(loader.load_data()[0][0])
+    imageLabels = np.asarray(loader.load_data()[0][1])
+
+    # flatten the vector
+    print(f'before reshaping, imageData shape is: {imageData.shape}')
+    imageData = imageData.reshape(-1, 784)
+    print(f'after reshaping, imageData shape is: {imageData.shape}')
+
+    # normalizing the vector
+    imageData = imageData / 255
+
+    # announcements
+    print(f'starting algorithm algorithm with {n_pictures} pictures...')
+    # startTime = time.time()
+
+    # kmeans algorithm
+    return imageData[0:n_pictures], imageLabels[0:n_pictures]
 
 
 if __name__ == '__main__':
@@ -180,23 +229,30 @@ if __name__ == '__main__':
                         [1, 2],
                         [1, 2]])
         # TODO Import  X
-        C = np.asarray([[1, 0],
-                        [0, 1]])
+        # C = np.asarray([[1, 0],
+        #                [0, 1]])
         # TODO Import
         w = np.asarray([[2],
                         [2],
                         [2]])
 
-        X = np.asarray([[1, 2, 4, 8, 16],
-                        [1, 2, 4, 8, 16],
-                        [1, 2, 4, 1, 1]])
+        nlen = 3
+        mlen = 5
+        X = np.asarray([[1, 1, 1, 0, 0],
+                        [1, 1, 1, 0, 0],
+                        [1, 1, 1, 0, 0]])
+
+        X = np.asarray([[1.6, 1, 1, 1.5, 8],
+                        [1, 0.3, 2, 0, 3],
+                        [1, 1, 1, 3, 5.6]])
         # TODO Import  X
         C = np.asarray([[1, 1, 1, 0, 0],
                         [0, 0, 0, 1, 1]])
         # TODO Import
-        w = np.asarray([[3],
-                        [3],
+        w = np.asarray([[0.6],
+                        [2],
                         [3]])
+
         # TODO Import w
         section_a = [LRobjective(w, X, C), LRGradient(w, X, C), LRHessian(X, w)]
         f = lambda x: LRobjective(w,x,C)
