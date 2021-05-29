@@ -294,3 +294,5 @@ if __name__ == '__main__':
         hessFunc = lambda w_3: LRHessian(X, w_3, m)
         hessianTest(gradFunc, hessFunc, w, d)
         print(f'-----Q4 end-----')
+
+
