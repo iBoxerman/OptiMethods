@@ -7,8 +7,9 @@ import matplotlib.pyplot as plt
 import numpy.linalg as alg
 
 import loadMNIST
-import loadMNIST_V2
 
+
+# import loadMNIST_V2
 
 def regularLSforQ2a(A, b, lam, G):
     return np.asarray(alg.inv(A.T @ A + lam * G.T @ G) @ A.T @ b)
@@ -74,7 +75,7 @@ def coronaDataToVector(path):
 
 def sigmoid(XT, w):
     matrix_mul = -XT @ w
-    return 1.0 / (1.0 + np.exp(matrix_mul))
+    return 1.0 / (1.0 + np.exp(matrix_mul) + 0.0000001)
 
 
 def LRobjective(w, X, C):
@@ -140,52 +141,68 @@ def gradTest(f, X, gradX, sampleVec):
         twos.append(Otwo(epsilons[i]))
 
     plt.figure()
-    plt.title("g=|f(x+e*d) - f(x)|")
-    plt.xlabel("epsilons")
-    plt.ylabel("g(e)")
-    plt.plot(epsilons[:], ones)
-
-    plt.figure()
-    plt.title("g=|f(x+e*d) - f(x)- e * d.T @ grad(x)|")
-    plt.xlabel("epsilons")
-    plt.ylabel("g(e)")
-    plt.plot(epsilons[:], twos)
-    # plt.legend(["ones", "twos"])
+    plt.semilogy([i for i in range(1, numOfIter + 1)], y_0)
+    plt.semilogy([i for i in range(1, numOfIter + 1)], y_1)
+    plt.title("Successful Grad test in semiLog plot")
+    plt.xlabel("k")
+    plt.ylabel("error")
+    plt.legend(["first order approx", "second order approx"])
     plt.show()
 
 
-def hessianTest(gradFunc, hesFunc, x, sampleVec):
-    print("")
-
-
-def load(n_pictures):
+def load(numOftest, dig1, dig2):
     # valid input
-    if n_pictures > 60000 | n_pictures == 0:
-        print(f'number of picture is {n_pictures}>60000 or 0')
+    if numOftest > 60000:
+        print(f'number of picture is {numOftest}>60000 or 0')
         return
 
     # loading data from MNIST
-    loader = loadMNIST_V2.MnistDataloader("./dataset/MNIST/train-images.idx3-ubyte",
-                                          "./dataset/MNIST/train-labels.idx1-ubyte",
-                                          "./dataset/MNIST/t10k-images.idx3-ubyte",
-                                          "./dataset/MNIST/t10k-labels.idx1-ubyte")
+    loader = loadMNIST.MnistDataloader("./dataset/MNIST/train-images.idx3-ubyte",
+                                       "./dataset/MNIST/train-labels.idx1-ubyte",
+                                       "./dataset/MNIST/t10k-images.idx3-ubyte",
+                                       "./dataset/MNIST/t10k-labels.idx1-ubyte")
     imageData = np.asarray(loader.load_data()[0][0])
     imageLabels = np.asarray(loader.load_data()[0][1])
 
     # flatten the vector
-    print(f'before reshaping, imageData shape is: {imageData.shape}')
     imageData = imageData.reshape(-1, 784)
-    print(f'after reshaping, imageData shape is: {imageData.shape}')
 
     # normalizing the vector
     imageData = imageData / 255
 
-    # announcements
-    print(f'starting algorithm algorithm with {n_pictures} pictures...')
-    # startTime = time.time()
+    # clearing the data only for our digits
+    data = []
+    labels = []
+    test = []
+    i = 0
+    chosenCounter = 0
 
-    # kmeans algorithm
-    return imageData[0:n_pictures], imageLabels[0:n_pictures]
+    while i < len(imageData) and chosenCounter < numOftest:
+        if imageLabels[i] == dig1 or imageLabels[i] == dig2:
+            data.append(imageData[i])
+            labels.append(imageLabels[i])
+            chosenCounter += 1
+        i += 1
+
+    while True:
+        if imageLabels[i] == dig1 or imageLabels[i] == dig2:
+            test.append(imageData[i])
+            break
+        i += 1
+
+    # create C as binary labels
+    label1 = np.asarray(labels)
+    label2 = np.asarray(labels)
+    for i in range(0, numOftest):
+        if labels[i] == dig1:
+            label1[i] = 1
+            label2[i] = 0
+        else:
+            label1[i] = 0
+            label2[i] = 1
+
+    C = np.asarray([label1, label2])
+    return np.asarray(data).T, C, np.asarray(test).T
 
 
 if __name__ == '__main__':
@@ -225,37 +242,16 @@ if __name__ == '__main__':
 
     if (Q4):
         print(f'-------Q4:------')
-        X = np.asarray([[1, 2],
-                        [1, 2],
-                        [1, 2]])
-        # TODO Import  X
-        # C = np.asarray([[1, 0],
-        #                [0, 1]])
-        # TODO Import
-        w = np.asarray([[2],
-                        [2],
-                        [2]])
-
-        nlen = 3
-        mlen = 5
-        X = np.asarray([[1, 1, 1, 0, 0],
-                        [1, 1, 1, 0, 0],
-                        [1, 1, 1, 0, 0]])
-
-        X = np.asarray([[1.6, 1, 1, 1.5, 8],
-                        [1, 0.3, 2, 0, 3],
-                        [1, 1, 1, 3, 5.6]])
-        # TODO Import  X
-        C = np.asarray([[1, 1, 1, 0, 0],
-                        [0, 0, 0, 1, 1]])
-        # TODO Import
-        w = np.asarray([[0.6],
-                        [2],
-                        [3]])
-
-        # TODO Import w
-        section_a = [LRobjective(w, X, C), LRGradient(w, X, C), LRHessian(X, w)]
-        f = lambda x: LRobjective(w,x,C)
-        # TODO loop through different epsilons, and show the diff (for grad test)
-        gradTest(f,X,section_a[1])
+        X, C, w = load(100, 0, 1)
+        print(f'loaded DATA shape:{X.shape}')
+        #  print(f'labels are:\n{C}')
+        print(f'w shape:{w.shape}')
+        m = len(C[0])
+        section_a = [LRobjective(w, X, C), LRGradient(w, X, C), LRHessian(X, w, m)]
+        f = lambda w1: LRobjective(w1, X, C)
+        d = unitVectorGenerator(len(X))
+        gradTest(f, w, section_a[1], d)
+        gradFunc = lambda w2: LRGradient(w2, X, C)
+        hessFunc = lambda w_3: LRHessian(X, w_3, m)
+        hessianTest(gradFunc, hessFunc, w, d)
         print(f'-----Q4 end-----')
