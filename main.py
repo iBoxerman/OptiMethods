@@ -81,30 +81,15 @@ def sigmoid(XT, w):
 def LRobjective(w, X, C):
     m = len(C[0])
     c1 = np.asarray([C[0]])
-    # print(f'c1:\n{c1} \n')
-
     c2 = np.asarray([C[1]])
-
-    print(f'sigmoid:{(sigmoid(X.T, w))} \n')
-    oneVec = np.asarray([[1], [1], [1], [1], [1]])
-    print(f' 1- sig = {1.0 - (sigmoid(X.T, w))}')
-    print(f' 1- sig with vec = {oneVec - (sigmoid(X.T, w))}')
-    print(f'log:\n{np.log(1.0 - sigmoid(X.T, w))}  ')
-
-    # print(f'c1.T:\n{c1} ')
-    print(f'!!!!!!:\n{c2 @ np.log(1 - sigmoid(X.T, w))} \n ')
-
     res = (-1 / m) * ((c1 @ np.log(sigmoid(X.T, w))) + (c2 @ np.log(1 - sigmoid(X.T, w))))
-    print(f'result:\n{res}\n')
     return res[0]
 
 
 def LRGradient(w, X, C):
     m = len(C[0])
     c1 = np.asarray([C[0]])
-    print(f' grad, c = {c1.T}')
     res = (1 / m) * X @ (sigmoid(X.T, w) - c1.T)
-    print(f'res = {res}')
     return res
 
 
@@ -122,23 +107,44 @@ def LRHessian(X, w, m):
     return (1 / m) * X @ D @ X.T
 
 
-def gradTest(f, X, gradX, sampleVec):
+def hessianTest(gradFunc, hessFunc, w, sampleVec):
     d = sampleVec
-    epsilons = []
-    for i in range(1, 90):
-        # epsilons.append(0.0015*i)
-        epsilons.append(0.1 * i)
-    epsilons = [1]
-    # print(epsilons)
-    Oone = lambda epsilon: abs(f(X + epsilon * d) - f(X))
-    print(gradX)
-    Otwo = lambda epsilon: abs(f(X + epsilon * d) - f(X) - epsilon * d.T @ gradX)[0][0]
-    ones = []
-    twos = []
+    numOfIter = 7
+    epsilon = 0.1
+    fx = gradFunc(w)
+    hessVal = hessFunc(w)
+    y_0 = np.zeros(numOfIter)
+    y_1 = np.zeros(numOfIter)
+    for k in range(1, numOfIter):
+        epsilon = epsilon * pow(1 / 2, k)
+        F_xd = gradFunc(w + epsilon * d)
+        jacMV = hessVal @ (epsilon * d)
+        y_0[k - 1] = np.linalg.norm(F_xd - fx)
+        y_1[k - 1] = np.linalg.norm(F_xd - fx - jacMV)
+    plt.figure()
+    plt.semilogy([i for i in range(1, numOfIter + 1)], y_0)
+    plt.semilogy([i for i in range(1, numOfIter + 1)], y_1)
+    plt.title("Successful Jacbian test in semiLog plot")
+    plt.xlabel("k")
+    plt.ylabel("error")
+    plt.legend(["First order approx", "Second order approx"])
+    plt.show()
 
-    for i in range(len(epsilons)):
-        ones.append(Oone(epsilons[i]))
-        twos.append(Otwo(epsilons[i]))
+
+def gradTest(f, w, gradX, sampleVec):
+    d = sampleVec
+    numOfIter = 8
+    epsilon = 0.1
+    f_0 = f(w)
+    y_0 = np.zeros(numOfIter)
+    y_1 = np.zeros(numOfIter)
+
+    for k in range(1, numOfIter):
+        epsilon = epsilon * pow(1 / 2, k)
+        Fk = f(w + epsilon * d)
+        F1 = f_0 + epsilon * (d.T @ gradX)
+        y_0[k - 1] = abs(Fk - f_0)
+        y_1[k - 1] = abs(Fk - F1)
 
     plt.figure()
     plt.semilogy([i for i in range(1, numOfIter + 1)], y_0)
