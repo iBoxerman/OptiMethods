@@ -100,7 +100,10 @@ def unitVectorGenerator(vecSize):
 
 
 def LRHessian(X, w, m):
+    print(f's1:\n{sigmoid(X.T, w).shape}')
+
     elementWise = np.multiply(sigmoid(X.T, w), (1 - sigmoid(X.T, w)))
+    print(f'shape:{elementWise.shape}, type:{type(elementWise)}')
     D = np.zeros((len(elementWise), len(elementWise)))
     for i in range(len(elementWise)):
         D[i][i] = elementWise[i]
@@ -156,10 +159,11 @@ def gradTest(f, w, gradX, sampleVec):
     plt.show()
 
 
-def load(numOftest, dig1, dig2):
+def load(numToTrainOn, dig1, dig2):
+    limit = 30000
     # valid input
-    if numOftest > 60000:
-        print(f'number of picture is {numOftest}>60000 or 0')
+    if numToTrainOn > 60000 or numToTrainOn > limit:
+        print(f'number of picture is {numToTrainOn}>60000 or 0')
         return
 
     # loading data from MNIST
@@ -169,46 +173,66 @@ def load(numOftest, dig1, dig2):
                                        "./dataset/MNIST/t10k-labels.idx1-ubyte")
     imageData = np.asarray(loader.load_data()[0][0])
     imageLabels = np.asarray(loader.load_data()[0][1])
+    testData = np.asarray(loader.load_data()[1][0])
+    testLabels = np.asarray(loader.load_data()[1][1])
 
     # flatten the vector
     imageData = imageData.reshape(-1, 784)
+    testData = testData.reshape(-1,784)
 
     # normalizing the vector
     imageData = imageData / 255
+    testData = testData / 255
 
     # clearing the data only for our digits
-    data = []
-    labels = []
-    test = []
+    # strating with train data
+    FilteredTrainImages = []
+    FilteredTrainLabels = []
+    FilteredTestImages = []
+    FilteredTestLabels = []
+
     i = 0
     chosenCounter = 0
-
-    while i < len(imageData) and chosenCounter < numOftest:
+    while i < limit and chosenCounter < numToTrainOn:
         if imageLabels[i] == dig1 or imageLabels[i] == dig2:
-            data.append(imageData[i])
-            labels.append(imageLabels[i])
+            FilteredTrainImages.append(imageData[i])
+            FilteredTrainLabels.append(imageLabels[i])
             chosenCounter += 1
         i += 1
 
-    while True:
-        if imageLabels[i] == dig1 or imageLabels[i] == dig2:
-            test.append(imageData[i])
-            break
+    # moving to test data
+    i = 0
+    while i<len(testData):
+        if testLabels[i] == dig1 or testLabels[i] == dig2:
+            FilteredTestImages.append(testData[i])
+            FilteredTestLabels.append(testLabels[i])
         i += 1
 
     # create C as binary labels
-    label1 = np.asarray(labels)
-    label2 = np.asarray(labels)
-    for i in range(0, numOftest):
-        if labels[i] == dig1:
+    label1 = np.asarray(FilteredTrainLabels)
+    label2 = np.asarray(FilteredTrainLabels)
+    for i in range(0, len(FilteredTrainLabels)-1):
+        if FilteredTrainLabels[i] == dig1:
             label1[i] = 1
             label2[i] = 0
         else:
             label1[i] = 0
             label2[i] = 1
-
     C = np.asarray([label1, label2])
-    return np.asarray(data).T, C, np.asarray(test).T
+
+    # creating verification
+    testLabel1 = np.asarray(FilteredTestLabels)
+    testLabel2 = np.asarray(FilteredTestLabels)
+    for i in range(0, len(FilteredTestLabels)):
+        if FilteredTestLabels[i] == dig1:
+            testLabel1[i] = 1
+            testLabel2[i] = 0
+        else:
+            testLabel1[i] = 0
+            testLabel2[i] = 1
+    results = np.asarray([testLabel1, testLabel2])
+
+    return np.asarray(FilteredTrainImages).T, C, np.asarray(FilteredTestImages).T, results
 
 
 if __name__ == '__main__':
@@ -248,10 +272,19 @@ if __name__ == '__main__':
 
     if (Q4):
         print(f'-------Q4:------')
-        X, C, w = load(100, 0, 1)
+        X, C, wWhichISAllImages , res = load(30000, 0, 1)
+
+        #TODO define w as single picture and run over it
+        w= np.asarray([wWhichISAllImages[:,0]])
+        w=w.T # hartman knows why
+
+        #TODO make conclutions
+
+
         print(f'loaded DATA shape:{X.shape}')
-        #  print(f'labels are:\n{C}')
+        print(f'loaded DATA labels shape:{C.shape}')
         print(f'w shape:{w.shape}')
+        print(f'results are:{res.shape}')
         m = len(C[0])
         section_a = [LRobjective(w, X, C), LRGradient(w, X, C), LRHessian(X, w, m)]
         f = lambda w1: LRobjective(w1, X, C)
