@@ -1,6 +1,3 @@
-import math
-from datetime import time
-
 import numpy as np
 from scipy import sparse as sparse
 import matplotlib.pyplot as plt
@@ -295,4 +292,4 @@ if __name__ == '__main__':
         hessianTest(gradFunc, hessFunc, w, d)
         print(f'-----Q4 end-----')
 
-
+        # a beautiful comment for push commit
