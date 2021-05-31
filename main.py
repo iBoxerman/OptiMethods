@@ -70,8 +70,9 @@ def coronaDataToVector(path):
     return vectorArray
 
 
-def sigmoid(XT, w):
-    matrix_mul = -XT @ w
+def sigmoid(X, w):
+    XT = X.T
+    matrix_mul = XT @ w
     return 1.0 / (1.0 + np.exp(matrix_mul) + 0.0000001)
 
 
@@ -79,14 +80,14 @@ def LRobjective(w, X, C):
     m = len(C[0])
     c1 = np.asarray([C[0]])
     c2 = np.asarray([C[1]])
-    res = (-1 / m) * ((c1 @ np.log(sigmoid(X.T, w))) + (c2 @ np.log(1 - sigmoid(X.T, w))))
+    res = (-1 / m) * ((c1 @ np.log(sigmoid(X, w))) + (c2 @ np.log(1 - sigmoid(X, w))))
     return res[0]
 
 
 def LRGradient(w, X, C):
     m = len(C[0])
-    c1 = np.asarray([C[0]])
-    res = (1 / m) * X @ (sigmoid(X.T, w) - c1.T)
+    c1 = np.asarray([C[0]]).T
+    res = (1 / m) * X @ (sigmoid(X, w) - c1)
     return res
 
 
@@ -97,9 +98,8 @@ def unitVectorGenerator(vecSize):
 
 
 def LRHessian(X, w, m):
-    print(f's1:\n{sigmoid(X.T, w).shape}')
 
-    elementWise = np.multiply(sigmoid(X.T, w), (1 - sigmoid(X.T, w)))
+    elementWise = np.multiply(sigmoid(X, w), (1 - sigmoid(X, w)))
     print(f'shape:{elementWise.shape}, type:{type(elementWise)}')
     D = np.zeros((len(elementWise), len(elementWise)))
     for i in range(len(elementWise)):
@@ -266,6 +266,7 @@ def SD(trainData, trainLabels, testData, testLabels):
         f_train_diffs.append((abs(trainSamples[i]- trainSamples[-1])))
 
     # TODO Plot both diffs on the same graph. x label is "iterations", y label is "objective value"
+
     return weight
 
 def armijo (weight , objectiveF, gradF, direction) :
@@ -327,8 +328,8 @@ if __name__ == '__main__':
         print(f'-------Q4:------')
         testImages, testLabels, trainData, trainLabels = load(30000, 0, 1)
 
-        testImages = testImages.T
-        trainData = trainData.T
+        testImages = testImages
+        trainData = trainData
         ##############################################################
         # test section, delete when done
         c1 = np.asarray([trainLabels[0]])
@@ -345,8 +346,8 @@ if __name__ == '__main__':
         f = lambda w1: LRobjective(w1, testImages, testLabels)
         d = unitVectorGenerator(len(testImages))
 
-        gradFunc = lambda w2: LRGradient(w2, testImages, testLabels)
-        hessFunc = lambda w_3: LRHessian(testImages, w_3, m)
+        # gradFunc = lambda w2: LRGradient(w2, testImages, testLabels)
+        # hessFunc = lambda w_3: LRHessian(testImages, w_3, m)
         # hessianTest(gradFunc, hessFunc, w, d)
         # gradTest(f, w, section_a[1], d)
 
