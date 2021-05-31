@@ -403,13 +403,13 @@ if __name__ == '__main__':
         m = len(testLabels[0])
         f = lambda w1: LRobjective(w1, testImages, testLabels)
         d = unitVectorGenerator(len(testImages))
-
+        #############################################
+        # leave like this, ill use it later
         # gradFunc = lambda w2: LRGradient(w2, testImages, testLabels)
         # hessFunc = lambda w_3: LRHessian(testImages, w_3, m)
         # hessianTest(gradFunc, hessFunc, w, d)
         # gradTest(f, w, section_a[1], d)
-
-        # trainData, trainLabels, testData, testLabels, objectiveF, gradF
-        newton(trainData, trainLabels, testImages, testLabels)
+        ##############################################
+        SD(trainData, trainLabels, testImages, testLabels)
 
         print(f'-----Q4 end-----')
