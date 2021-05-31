@@ -1,7 +1,7 @@
-import matplotlib.pyplot as plt
 import numpy as np
-import numpy.linalg as alg
 from scipy import sparse as sparse
+import matplotlib.pyplot as plt
+import numpy.linalg as alg
 
 import loadMNIST
 
@@ -175,7 +175,7 @@ def load(numToTrainOn, dig1, dig2):
 
     # flatten the vector
     imageData = imageData.reshape(-1, 784)
-    testData = testData.reshape(-1, 784)
+    testData = testData.reshape(-1,784)
 
     # normalizing the vector
     imageData = imageData / 255
@@ -199,7 +199,7 @@ def load(numToTrainOn, dig1, dig2):
 
     # moving to test data
     i = 0
-    while i < len(testData):
+    while i<len(testData):
         if testLabels[i] == dig1 or testLabels[i] == dig2:
             FilteredTestImages.append(testData[i])
             FilteredTestLabels.append(testLabels[i])
@@ -208,7 +208,7 @@ def load(numToTrainOn, dig1, dig2):
     # create C as binary labels
     label1 = np.asarray(FilteredTrainLabels)
     label2 = np.asarray(FilteredTrainLabels)
-    for i in range(0, len(FilteredTrainLabels) - 1):
+    for i in range(0, len(FilteredTrainLabels)-1):
         if FilteredTrainLabels[i] == dig1:
             label1[i] = 1
             label2[i] = 0
@@ -231,62 +231,6 @@ def load(numToTrainOn, dig1, dig2):
 
     return np.asarray(FilteredTrainImages).T, C, np.asarray(FilteredTestImages).T, results
 
-
-
-def SD(trainData, trainLabels, testData, testLabels):
-    alpha = 1
-    trainSamples = []
-    testSamples = []
-    trainVals = []
-    weight = np.asarray([[0]] * 784)
-    c1 = np.asarray([trainLabels[0]])
-    c2 = np.asarray([trainLabels[1]])
-    first = True
-    for i in range(100):
-        # calculating for train
-        print("calculating for train")
-        prevW = weight
-        direction = -LRGradient(prevW, trainData, trainLabels)
-        fFunc = lambda w : LRobjective(w, trainVals, trainLabels)
-        alpha = armijo(weight,fFunc,LRGradient(weight,trainVals,trainLabels), direction ) #TODO
-        weight = np.clip(prevW+alpha*direction,-1,1)
-
-        # calculating for test
-        trainSamples.append( LRobjective(weight, trainData, trainLabels))
-        testSamples.append(LRobjective(weight, testData, testLabels))
-
-        if ((not first) and (testConverge(weight, prevW))):
-            break
-        first = False
-
-    f_train_diffs = []
-    f_test_diffs = []
-    for i in range (len(f_test_diffs)):
-        f_test_diffs.append(abs(testSamples[i]-testSamples[-1]))
-        f_train_diffs.append((abs(trainSamples[i]- trainSamples[-1])))
-
-    # TODO Plot both diffs on the same graph. x label is "iterations", y label is "objective value"
-    return weight
-
-def armijo (weight , objectiveF, gradF, direction) :
-    alpha = 1
-    beta = 1/2
-    c = 1*pow(10,-4)
-    f_x = objectiveF(weight)
-    for i in range (10):
-        f_alpha = objectiveF(weight + alpha * direction)
-
-        if (f_alpha <= f_x + c*alpha*np.dot(gradF,direction)):
-            print (np.dot(gradF, direction))
-            return alpha
-        else:
-            alpha = beta * alpha
-    return alpha
-
-
-def testConverge(weight, prevW):
-        normsOutput = np.linalg.norm(weight-prevW)/np.linalg.norm(prevW)
-        return normsOutput < 0.0001
 
 if __name__ == '__main__':
     Q2 = False
@@ -325,32 +269,27 @@ if __name__ == '__main__':
 
     if (Q4):
         print(f'-------Q4:------')
-        testImages, testLabels, trainData, trainLabels = load(30000, 0, 1)
+        X, C, wWhichISAllImages , res = load(30000, 0, 1)
 
-        testImages = testImages.T
-        trainData = trainData.T
-        ##############################################################
-        # test section, delete when done
-        c1 = np.asarray([trainLabels[0]])
-        c2 = np.asarray([trainLabels[1]])
-        print(c1.shape)
+        #TODO define w as single picture and run over it
+        w= np.asarray([wWhichISAllImages[:,0]])
+        w=w.T # hartman knows why
 
-        #############################################################
-        # TODO make conclutions
+        #TODO make conclutions
 
-        print(f'loaded DATA shape:{testImages.shape}')
-        print(f'loaded DATA labels shape:{testLabels.shape}')
-        print(f'results are:{trainLabels.shape}')
-        m = len(testLabels[0])
-        f = lambda w1: LRobjective(w1, testImages, testLabels)
-        d = unitVectorGenerator(len(testImages))
 
-        gradFunc = lambda w2: LRGradient(w2, testImages, testLabels)
-        hessFunc = lambda w_3: LRHessian(testImages, w_3, m)
-        # hessianTest(gradFunc, hessFunc, w, d)
-        # gradTest(f, w, section_a[1], d)
-
-        # trainData, trainLabels, testData, testLabels, objectiveF, gradF
-        SD(testImages, testLabels, testImages, testLabels)
-
+        print(f'loaded DATA shape:{X.shape}')
+        print(f'loaded DATA labels shape:{C.shape}')
+        print(f'w shape:{w.shape}')
+        print(f'results are:{res.shape}')
+        m = len(C[0])
+        section_a = [LRobjective(w, X, C), LRGradient(w, X, C), LRHessian(X, w, m)]
+        f = lambda w1: LRobjective(w1, X, C)
+        d = unitVectorGenerator(len(X))
+        gradTest(f, w, section_a[1], d)
+        gradFunc = lambda w2: LRGradient(w2, X, C)
+        hessFunc = lambda w_3: LRHessian(X, w_3, m)
+        hessianTest(gradFunc, hessFunc, w, d)
         print(f'-----Q4 end-----')
+
+        # a beautiful comment for push commit
