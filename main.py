@@ -73,7 +73,7 @@ def coronaDataToVector(path):
 def sigmoid(X, w):
     XT = X.T
     matrix_mul = XT @ w
-    return 1.0 / (1.0 + np.exp(matrix_mul) + 0.0000001)
+    return 1.0 / (1.0 + np.exp(matrix_mul))
 
 
 def LRobjective(w, X, C):
@@ -98,7 +98,6 @@ def unitVectorGenerator(vecSize):
 
 
 def LRHessian(X, w, m):
-
     elementWise = np.multiply(sigmoid(X, w), (1 - sigmoid(X, w)))
     print(f'shape:{elementWise.shape}, type:{type(elementWise)}')
     D = np.zeros((len(elementWise), len(elementWise)))
@@ -232,27 +231,25 @@ def load(numToTrainOn, dig1, dig2):
     return np.asarray(FilteredTrainImages).T, C, np.asarray(FilteredTestImages).T, results
 
 
-
 def SD(trainData, trainLabels, testData, testLabels):
     alpha = 1
     trainSamples = []
     testSamples = []
-    trainVals = []
     weight = np.asarray([[0]] * 784)
     c1 = np.asarray([trainLabels[0]])
     c2 = np.asarray([trainLabels[1]])
     first = True
     for i in range(100):
         # calculating for train
-        print("calculating for train")
+        # print("calculating for train")
         prevW = weight
-        direction = -LRGradient(prevW, trainData, trainLabels)
-        fFunc = lambda w : LRobjective(w, trainVals, trainLabels)
-        alpha = armijo(weight,fFunc,LRGradient(weight,trainVals,trainLabels), direction ) #TODO
-        weight = np.clip(prevW+alpha*direction,-1,1)
+        direction = -1 * LRGradient(prevW, trainData, trainLabels)
+        fFunc = lambda w: LRobjective(w, trainData, trainLabels)
+        alpha = armijo(prevW, fFunc, -1 * direction, direction)
+        weight = np.clip(prevW + alpha * direction, -1, 1)
 
         # calculating for test
-        trainSamples.append( LRobjective(weight, trainData, trainLabels))
+        trainSamples.append(LRobjective(weight, trainData, trainLabels))
         testSamples.append(LRobjective(weight, testData, testLabels))
 
         if ((not first) and (testConverge(weight, prevW))):
@@ -261,33 +258,45 @@ def SD(trainData, trainLabels, testData, testLabels):
 
     f_train_diffs = []
     f_test_diffs = []
-    for i in range (len(f_test_diffs)):
-        f_test_diffs.append(abs(testSamples[i]-testSamples[-1]))
-        f_train_diffs.append((abs(trainSamples[i]- trainSamples[-1])))
+    for i in range(len(testSamples)):
+        f_test_diffs.append(abs(testSamples[i] - testSamples[-1]))
+        f_train_diffs.append(abs(trainSamples[i] - trainSamples[-1]))
+
+    plt.figure()
+    plt.plot(f_test_diffs)
+    plt.plot(f_train_diffs)
+    plt.title("f for test (w^k)-f(w^*)")
+    plt.xlabel("iteration")
+    plt.ylabel("diff")
+    plt.legend(["test Diffs", "trainDiffs"])
+    plt.show()
 
     # TODO Plot both diffs on the same graph. x label is "iterations", y label is "objective value"
 
     return weight
 
-def armijo (weight , objectiveF, gradF, direction) :
-    alpha = 1
-    beta = 1/2
-    c = 1*pow(10,-4)
-    f_x = objectiveF(weight)
-    for i in range (10):
-        f_alpha = objectiveF(weight + alpha * direction)
 
-        if (f_alpha <= f_x + c*alpha*np.dot(gradF,direction)):
-            print (np.dot(gradF, direction))
+def armijo(weight, objectiveF, gradF, direction):
+    alpha = 1
+    beta = 1 / 2
+    c = 1 * pow(10, -4)
+    f_x = objectiveF(weight)
+
+    for i in range(10):
+        f_alpha = objectiveF(weight + alpha * direction)
+        if (f_alpha <= f_x + c * alpha * np.dot(gradF.T[0], direction.T[0])):
             return alpha
         else:
             alpha = beta * alpha
+
     return alpha
 
 
 def testConverge(weight, prevW):
-        normsOutput = np.linalg.norm(weight-prevW)/np.linalg.norm(prevW)
-        return normsOutput < 0.0001
+    normsOutput = np.linalg.norm(weight - prevW) / np.linalg.norm(prevW)
+    print (normsOutput)
+    return normsOutput < 0.0001
+
 
 if __name__ == '__main__':
     Q2 = False
@@ -352,6 +361,6 @@ if __name__ == '__main__':
         # gradTest(f, w, section_a[1], d)
 
         # trainData, trainLabels, testData, testLabels, objectiveF, gradF
-        SD(testImages, testLabels, testImages, testLabels)
+        SD(trainData, trainLabels, testImages, testLabels)
 
         print(f'-----Q4 end-----')
