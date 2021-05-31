@@ -99,7 +99,6 @@ def unitVectorGenerator(vecSize):
 
 def LRHessian(X, w, m):
     elementWise = np.multiply(sigmoid(X, w), (1 - sigmoid(X, w)))
-    print(f'shape:{elementWise.shape}, type:{type(elementWise)}')
     D = np.zeros((len(elementWise), len(elementWise)))
     for i in range(len(elementWise)):
         D[i][i] = elementWise[i]
@@ -231,8 +230,8 @@ def load(numToTrainOn, dig1, dig2):
     return np.asarray(FilteredTrainImages).T, C, np.asarray(FilteredTestImages).T, results
 
 
-def SD(trainData, trainLabels, testData, testLabels):
-    alpha = 1
+def SD(trainData, trainLabels, testImages, testLabels):
+
     trainSamples = []
     testSamples = []
     weight = np.asarray([[0]] * 784)
@@ -250,7 +249,7 @@ def SD(trainData, trainLabels, testData, testLabels):
 
         # calculating for test
         trainSamples.append(LRobjective(weight, trainData, trainLabels))
-        testSamples.append(LRobjective(weight, testData, testLabels))
+        testSamples.append(LRobjective(weight, testImages, testLabels))
 
         if ((not first) and (testConverge(weight, prevW))):
             break
@@ -258,13 +257,14 @@ def SD(trainData, trainLabels, testData, testLabels):
 
     f_train_diffs = []
     f_test_diffs = []
-    for i in range(len(testSamples)):
-        f_test_diffs.append(abs(testSamples[i] - testSamples[-1]))
-        f_train_diffs.append(abs(trainSamples[i] - trainSamples[-1]))
+    n = len(testSamples)
+    for i in range(n):
+        f_test_diffs.append(abs(testSamples[i] - testSamples[n-1]))
+        f_train_diffs.append(abs(trainSamples[i] - trainSamples[n-1]))
 
     plt.figure()
-    plt.plot(f_test_diffs)
-    plt.plot(f_train_diffs)
+    plt.semilogy(f_test_diffs)
+    plt.semilogy(f_train_diffs)
     plt.title("f for test (w^k)-f(w^*)")
     plt.xlabel("iteration")
     plt.ylabel("diff")
@@ -275,6 +275,59 @@ def SD(trainData, trainLabels, testData, testLabels):
 
     return weight
 
+
+def newton(trainData, trainLabels, testImages, testLabels):
+    trainSamples = []
+    testSamples = []
+    weight = np.asarray([[0]] * 784)
+    c1 = np.asarray([trainLabels[0]])
+    c2 = np.asarray([trainLabels[1]])
+    m = len(testLabels[0])
+    first = True
+    for i in range(100):
+        # calculating for train
+        # print("calculating for train")
+        prevW = weight
+        hess = LRHessian(trainData,prevW, m )
+        gradF = LRGradient(prevW, trainData, trainLabels)
+        try:
+            direction = -1 * np.linalg.inv(hess) @ gradF
+        except:
+            hess = hess + (0.1 * np.eye(len(hess)))
+            direction = -1 * np.linalg.inv(hess) @ gradF
+
+        direction = -1 * np.linalg.inv(hess) @ gradF
+        fFunc = lambda w: LRobjective(w, trainData, trainLabels)
+        alpha = armijo(prevW, fFunc, gradF, direction)
+        weight = np.clip(prevW + alpha * direction, -1, 1)
+
+        # calculating for test
+        trainSamples.append(LRobjective(weight, trainData, trainLabels))
+        testSamples.append(LRobjective(weight, testImages, testLabels))
+
+        if ((not first) and (testConverge(weight, prevW))):
+            break
+        first = False
+
+    f_train_diffs = []
+    f_test_diffs = []
+    n = len(testSamples)
+    for i in range(n):
+        f_test_diffs.append(abs(testSamples[i] - testSamples[n - 1]))
+        f_train_diffs.append(abs(trainSamples[i] - trainSamples[n - 1]))
+
+    plt.figure()
+    plt.semilogy(f_test_diffs)
+    plt.semilogy(f_train_diffs)
+    plt.title("f for test (w^k)-f(w^*)")
+    plt.xlabel("iteration")
+    plt.ylabel("diff")
+    plt.legend(["test Diffs", "trainDiffs"])
+    plt.show()
+
+    # TODO Plot both diffs on the same graph. x label is "iterations", y label is "objective value"
+
+    return weight
 
 def armijo(weight, objectiveF, gradF, direction):
     alpha = 1
@@ -294,7 +347,6 @@ def armijo(weight, objectiveF, gradF, direction):
 
 def testConverge(weight, prevW):
     normsOutput = np.linalg.norm(weight - prevW) / np.linalg.norm(prevW)
-    print (normsOutput)
     return normsOutput < 0.0001
 
 
@@ -337,18 +389,15 @@ if __name__ == '__main__':
         print(f'-------Q4:------')
         testImages, testLabels, trainData, trainLabels = load(30000, 0, 1)
 
-        testImages = testImages
-        trainData = trainData
+
         ##############################################################
         # test section, delete when done
-        c1 = np.asarray([trainLabels[0]])
-        c2 = np.asarray([trainLabels[1]])
-        print(c1.shape)
 
         #############################################################
         # TODO make conclutions
 
         print(f'loaded DATA shape:{testImages.shape}')
+        print (f'loaded DATA shape:{trainData.shape}')
         print(f'loaded DATA labels shape:{testLabels.shape}')
         print(f'results are:{trainLabels.shape}')
         m = len(testLabels[0])
@@ -361,6 +410,6 @@ if __name__ == '__main__':
         # gradTest(f, w, section_a[1], d)
 
         # trainData, trainLabels, testData, testLabels, objectiveF, gradF
-        SD(trainData, trainLabels, testImages, testLabels)
+        newton(trainData, trainLabels, testImages, testLabels)
 
         print(f'-----Q4 end-----')
