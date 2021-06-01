@@ -72,7 +72,7 @@ def coronaDataToVector(path):
 
 def sigmoid(X, w):
     XT = X.T
-    matrix_mul = XT @ w
+    matrix_mul = -1 * XT @ w
     return 1.0 / (1.0 + np.exp(matrix_mul))
 
 
@@ -114,11 +114,12 @@ def hessianTest(gradFunc, hessFunc, w, sampleVec):
     y_0 = np.zeros(numOfIter)
     y_1 = np.zeros(numOfIter)
     for k in range(1, numOfIter):
-        epsilon = epsilon * pow(1 / 2, k)
         F_xd = gradFunc(w + epsilon * d)
         jacMV = hessVal @ (epsilon * d)
-        y_0[k - 1] = np.linalg.norm(F_xd - fx)
-        y_1[k - 1] = np.linalg.norm(F_xd - fx - jacMV)
+        y_0[k - 1] = np.linalg.norm(F_xd - fx ,2)
+        y_1[k - 1] = np.linalg.norm(F_xd - fx - jacMV ,2)
+        epsilon = epsilon * pow(1 / 2, k)
+
     plt.figure()
     plt.semilogy([i for i in range(1, numOfIter + 1)], y_0)
     plt.semilogy([i for i in range(1, numOfIter + 1)], y_1)
@@ -138,11 +139,12 @@ def gradTest(f, w, gradX, sampleVec):
     y_1 = np.zeros(numOfIter)
 
     for k in range(1, numOfIter):
-        epsilon = epsilon * pow(1 / 2, k)
+
         Fk = f(w + epsilon * d)
         F1 = f_0 + epsilon * (d.T @ gradX)
         y_0[k - 1] = abs(Fk - f_0)
         y_1[k - 1] = abs(Fk - F1)
+        epsilon = epsilon * pow(1 / 2, k)
 
     plt.figure()
     plt.semilogy([i for i in range(1, numOfIter + 1)], y_0)
@@ -403,12 +405,13 @@ if __name__ == '__main__':
         m = len(testLabels[0])
         f = lambda w1: LRobjective(w1, testImages, testLabels)
         d = unitVectorGenerator(len(testImages))
+        w = np.clip(unitVectorGenerator(len(testImages)), -1 ,1)
         #############################################
         # leave like this, ill use it later
-        # gradFunc = lambda w2: LRGradient(w2, testImages, testLabels)
-        # hessFunc = lambda w_3: LRHessian(testImages, w_3, m)
-        # hessianTest(gradFunc, hessFunc, w, d)
-        # gradTest(f, w, section_a[1], d)
+        gradFunc = lambda w2: LRGradient(w2, testImages, testLabels)
+        hessFunc = lambda w_3: LRHessian(testImages, w_3, m)
+        hessianTest(gradFunc, hessFunc, w, d)
+        gradTest(f, w, gradFunc(w), d)
         ##############################################
         SD(trainData, trainLabels, testImages, testLabels)
 
