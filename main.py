@@ -88,8 +88,8 @@ def LRobjective(w, X, C):
 def LRGradient(w, X, C):
     m = len(C[0])
     c1 = np.asarray(C[0])
-    c1 = c1.reshape((c1.shape[0], 1))
-    sig = (sigmoid(X, w) - c1) ##TODO this is a matrix. should be vector
+    c1 = c1.reshape((c1.shape[0]))
+    sig = (sigmoid(X, w).reshape(len(c1)) - c1)
     res = (1 / m) * X @ sig
     return res
 
@@ -110,8 +110,9 @@ def LRHessian(X, w, m):
 
 def hessianTest(gradFunc, hessFunc, w, sampleVec):
     d = sampleVec
+    d = np.reshape(d, len(d))
     numOfIter = 7
-    epsilon = 1
+    epsilon = 1.0
     fx = gradFunc(w)
     hessVal = hessFunc(w)
     y_0 = []
@@ -126,11 +127,9 @@ def hessianTest(gradFunc, hessFunc, w, sampleVec):
         epsilon = epsilon * 1 / 2
 
     plt.figure()
-    for i in range (len(y_0)):
-        print (y_1[i]/y_0[i])
-    plt.plot(eps, y_0)
-    plt.plot(eps, y_1)
-    plt.title("Successful Jacbian test in semiLog plot")
+    plt.semilogy(eps, y_0)
+    plt.semilogy(eps, y_1)
+    plt.title("Jacobian test")
     plt.xlabel("epsilon")
     plt.ylabel("error")
     plt.legend(["First order approx", "Second order approx"])
@@ -166,7 +165,7 @@ def gradTest(f, w, gradX, sampleVec):
         openy1 .append(y_1 [i][0][0])
     plt.semilogy(eps, openy0)
     plt.semilogy(eps, openy1)
-    plt.title("Successful Grad test in semiLog plot")
+    plt.title("Grad test")
     plt.xlabel("epsilon")
     plt.ylabel("error")
     plt.legend(["first order approx", "second order approx"])
@@ -263,7 +262,7 @@ def SD(trainData, trainLabels, testImages, testLabels, one_zero):
         # calculating for train
         # print("calculating for train")
         prevW = weight
-        direction = -1 * LRGradient(prevW, trainData, trainLabels)
+        direction = -1.0 * LRGradient(prevW, trainData, trainLabels)
         fFunc = lambda w: LRobjective(w, trainData, trainLabels)
         alpha = armijo(prevW, fFunc, -1 * direction, direction)
         weight = np.clip(prevW + alpha * direction, -1, 1)
@@ -304,7 +303,6 @@ def SD(trainData, trainLabels, testImages, testLabels, one_zero):
     plt.legend(["test Difference", "train Difference"])
     plt.show()
 
-    # TODO Plot both diffs on the same graph. x label is "iterations", y label is "objective value"
 
     return weight
 
@@ -328,7 +326,7 @@ def newton(trainData, trainLabels, testImages, testLabels, one_zero):
         try:
             direction = -1 * np.linalg.inv(hess) @ gradF
         except:
-            hess = hess + (0.1 * np.eye(len(hess)))
+            hess = hess + (0.001 * np.eye(len(hess)))
             direction = -1 * np.linalg.inv(hess) @ gradF
 
         direction = -1 * np.linalg.inv(hess) @ gradF
@@ -371,7 +369,6 @@ def newton(trainData, trainLabels, testImages, testLabels, one_zero):
     plt.legend(["test Difference", "train Difference"])
     plt.show()
 
-    # TODO Plot both diffs on the same graph. x label is "iterations", y label is "objective value"
 
     return weight
 
@@ -390,48 +387,6 @@ def armijo(weight, objectiveF, gradF, direction):
             alpha = beta * alpha
 
     return alpha
-
-def eranTest(f, w, sampleVec):
-    d = sampleVec
-    numOfIter = 8
-    epsilon = 1
-    gradX = w
-    f_0 = f(w)
-    y_0 = []
-    y_1 = []
-    eps = []
-    iter = []
-    for k in range(numOfIter):
-        Fk = f(w + epsilon * d)
-        F1 = f_0 + epsilon * np.dot(np.reshape(d,len(d)) , np.reshape(gradX,len(gradX)))
-        first = np.abs(Fk - f_0)
-        second = np.abs(Fk - F1)
-        y_0.append(np.abs(Fk - f_0))
-        y_1.append(np.abs(Fk - F1))
-        eps.append(epsilon)
-        epsilon = epsilon * pow(1/2,k)
-        iter.append(k)
-    plt.figure()
-    openy0 = []
-    openy1 = []
-
-    # for i in range(len(y_0)):
-    #     openy0.append(y_0[i][0][0])
-    #     openy1.append(y_1[i][0][0])
-    plt.semilogy(iter, y_0)
-    plt.semilogy(iter, y_1)
-    plt.title("eran test")
-    plt.xlabel("epsilon")
-    plt.ylabel("error")
-    plt.legend(["first order approx", "second order approx"])
-    # plt.gca().invert_xaxis()
-    plt.show()
-
-
-
-def eranFunc(x):
-    x = np.reshape(x, 784)
-    return 1/2 * np.dot(x,x)
 
 def testConverge(weight, prevW):
     normsOutput = np.linalg.norm(weight - prevW) / np.linalg.norm(prevW)
@@ -482,31 +437,33 @@ if __name__ == '__main__':
 
     if (Q4):
         print(f'-------Q4:------')
-        testImages, testLabels, trainData, trainLabels = load(30000, 8, 9)
+        testImages, testLabels, trainData, trainLabels = load(30000, 0, 1)
 
         ##############################################################
         # test section, delete when done
 
         #############################################################
-        # TODO make conclutions
 
         print(f'loaded DATA shape:{testImages.shape}')
         print(f'loaded DATA shape:{trainData.shape}')
         print(f'loaded DATA labels shape:{testLabels.shape}')
         print(f'results are:{trainLabels.shape}')
+
+        print (f' xTrain {sum(sum(trainData))}')
         m = len(testLabels[0])
         f = lambda w1: LRobjective(w1, testImages, testLabels)
         d = unitVectorGenerator(len(testImages))
-        w = np.clip(unitVectorGenerator(len(testImages)), -1, 1)
+        w = np.asarray([0]*784)
         #############################################
         # leave like this, ill use it later
         gradFunc = lambda w2: LRGradient(w2, testImages, testLabels)
         hessFunc = lambda w_3: LRHessian(testImages, w_3, m)
+        LRHessian(trainData, w, m)
+        print (testLabels[0])
         hessianTest(gradFunc, hessFunc, w, d)
         gradTest(f, w, gradFunc(w), d)
-        # eranTest(eranFunc, w, d)
         ##############################################
-        SD(trainData, trainLabels, testImages, testLabels , False)
-        newton(trainData, trainLabels, testImages, testLabels, False)
+        # SD(trainData, trainLabels, testImages, testLabels , True)
+        # newton(trainData, trainLabels, testImages, testLabels, True)
 
         print(f'-----Q4 end-----')
