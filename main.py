@@ -162,6 +162,7 @@ def gradTest(f, w, gradX, sampleVec):
     plt.xlabel("epsilon")
     plt.ylabel("error")
     plt.legend(["first order approx", "second order approx"])
+    plt.gca().invert_xaxis()
     plt.show()
 
 
