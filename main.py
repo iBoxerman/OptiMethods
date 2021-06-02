@@ -73,7 +73,8 @@ def coronaDataToVector(path):
 def sigmoid(X, w):
     XT = X.T
     matrix_mul = -1 * XT @ w
-    return 1.0 / (1.0 + np.exp(matrix_mul))
+    res = np.asarray(1.0 / (1.0 + np.exp(matrix_mul)))
+    return res
 
 
 def LRobjective(w, X, C):
@@ -86,8 +87,10 @@ def LRobjective(w, X, C):
 
 def LRGradient(w, X, C):
     m = len(C[0])
-    c1 = np.asarray([C[0]]).T
-    res = (1 / m) * X @ (sigmoid(X, w) - c1)
+    c1 = np.asarray(C[0])
+    c1 = c1.reshape((c1.shape[0], 1))
+    sig = (sigmoid(X, w) - c1) ##TODO this is a matrix. should be vector
+    res = (1 / m) * X @ sig
     return res
 
 
@@ -117,10 +120,10 @@ def hessianTest(gradFunc, hessFunc, w, sampleVec):
     for k in range(1, numOfIter):
         F_xd = gradFunc(w + epsilon * d)
         jacMV = hessVal @ (epsilon * d)
-        y_0.append( np.linalg.norm(F_xd - fx ,2))
-        y_1.append(np.linalg.norm(F_xd - fx - jacMV ,2))
+        y_0.append(np.linalg.norm(F_xd - fx, 2))
+        y_1.append(np.linalg.norm(F_xd - fx - jacMV, 2))
         eps.append(epsilon)
-        epsilon = epsilon * 1/2
+        epsilon = epsilon * 1 / 2
 
     plt.figure()
     plt.semilogy(eps, y_0)
@@ -143,21 +146,24 @@ def gradTest(f, w, gradX, sampleVec):
     y_1 = []
     eps = []
     for k in range(1, numOfIter):
-
         Fk = f(w + epsilon * d)
         F1 = f_0 + epsilon * (d.T @ gradX)
-        first = np.abs(Fk-f_0)
-        second = np.abs(Fk-F1)
+        first = np.abs(Fk - f_0)
+        second = np.abs(Fk - F1)
         y_0.append(np.abs(Fk - f_0))
         y_1.append(np.abs(Fk - F1))
         eps.append(epsilon)
-        epsilon = epsilon * pow(0.5,k)
-
+        epsilon = epsilon * pow(0.5, k)
 
     plt.figure()
-    print(f'eps, f1, f2 {eps[5]}, { y_0[5]}, {y_1[5]}')
-    plt.semilogy(eps, y_0)
-    plt.semilogy(eps, y_1)
+    openy0 = []
+    openy1 = []
+
+    for i in range (len(y_0)):
+        openy0.append( y_0[i][0][0])
+        openy1 .append(y_1 [i][0][0])
+    plt.semilogy(eps, openy0)
+    plt.semilogy(eps, openy1)
     plt.title("Successful Grad test in semiLog plot")
     plt.xlabel("epsilon")
     plt.ylabel("error")
@@ -243,7 +249,6 @@ def load(numToTrainOn, dig1, dig2):
 
 
 def SD(trainData, trainLabels, testImages, testLabels):
-
     trainSamples = []
     testSamples = []
     weight = np.asarray([[0]] * 784)
@@ -271,8 +276,8 @@ def SD(trainData, trainLabels, testImages, testLabels):
     f_test_diffs = []
     n = len(testSamples)
     for i in range(n):
-        f_test_diffs.append(abs(testSamples[i] - testSamples[n-1]))
-        f_train_diffs.append(abs(trainSamples[i] - trainSamples[n-1]))
+        f_test_diffs.append(abs(testSamples[i] - testSamples[n - 1]))
+        f_train_diffs.append(abs(trainSamples[i] - trainSamples[n - 1]))
 
     plt.figure()
     plt.semilogy(f_test_diffs)
@@ -300,7 +305,7 @@ def newton(trainData, trainLabels, testImages, testLabels):
         # calculating for train
         # print("calculating for train")
         prevW = weight
-        hess = LRHessian(trainData,prevW, m )
+        hess = LRHessian(trainData, prevW, m)
         gradF = LRGradient(prevW, trainData, trainLabels)
         try:
             direction = -1 * np.linalg.inv(hess) @ gradF
@@ -340,6 +345,7 @@ def newton(trainData, trainLabels, testImages, testLabels):
     # TODO Plot both diffs on the same graph. x label is "iterations", y label is "objective value"
 
     return weight
+
 
 def armijo(weight, objectiveF, gradF, direction):
     alpha = 1
@@ -401,7 +407,6 @@ if __name__ == '__main__':
         print(f'-------Q4:------')
         testImages, testLabels, trainData, trainLabels = load(30000, 0, 1)
 
-
         ##############################################################
         # test section, delete when done
 
@@ -409,18 +414,18 @@ if __name__ == '__main__':
         # TODO make conclutions
 
         print(f'loaded DATA shape:{testImages.shape}')
-        print (f'loaded DATA shape:{trainData.shape}')
+        print(f'loaded DATA shape:{trainData.shape}')
         print(f'loaded DATA labels shape:{testLabels.shape}')
         print(f'results are:{trainLabels.shape}')
         m = len(testLabels[0])
         f = lambda w1: LRobjective(w1, testImages, testLabels)
         d = unitVectorGenerator(len(testImages))
-        w = np.clip(unitVectorGenerator(len(testImages)), -1 ,1)
+        w = np.clip(unitVectorGenerator(len(testImages)), -1, 1)
         #############################################
         # leave like this, ill use it later
         gradFunc = lambda w2: LRGradient(w2, testImages, testLabels)
         hessFunc = lambda w_3: LRHessian(testImages, w_3, m)
-        # hessianTest(gradFunc, hessFunc, w, d)
+        hessianTest(gradFunc, hessFunc, w, d)
         gradTest(f, w, gradFunc(w), d)
         ##############################################
         # SD(trainData, trainLabels, testImages, testLabels)
