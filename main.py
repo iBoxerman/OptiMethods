@@ -81,7 +81,7 @@ def LRobjective(w, X, C):
     c1 = np.asarray([C[0]])
     c2 = np.asarray([C[1]])
     res = (-1 / m) * ((c1 @ np.log(sigmoid(X, w))) + (c2 @ np.log(1 - sigmoid(X, w))))
-    return res[0]
+    return res
 
 
 def LRGradient(w, X, C):
@@ -111,22 +111,26 @@ def hessianTest(gradFunc, hessFunc, w, sampleVec):
     epsilon = 0.1
     fx = gradFunc(w)
     hessVal = hessFunc(w)
-    y_0 = np.zeros(numOfIter)
-    y_1 = np.zeros(numOfIter)
+    y_0 = []
+    y_1 = []
+    eps = []
     for k in range(1, numOfIter):
         F_xd = gradFunc(w + epsilon * d)
         jacMV = hessVal @ (epsilon * d)
-        y_0[k - 1] = np.linalg.norm(F_xd - fx ,2)
-        y_1[k - 1] = np.linalg.norm(F_xd - fx - jacMV ,2)
-        epsilon = epsilon * pow(1 / 2, k)
+        y_0.append( np.linalg.norm(F_xd - fx ,2))
+        y_1.append(np.linalg.norm(F_xd - fx - jacMV ,2))
+        eps.append(epsilon)
+        epsilon = epsilon * 1/2
 
     plt.figure()
-    plt.semilogy([i for i in range(1, numOfIter + 1)], y_0)
-    plt.semilogy([i for i in range(1, numOfIter + 1)], y_1)
+    plt.semilogy(eps, y_0)
+    plt.semilogy(eps, y_1)
     plt.title("Successful Jacbian test in semiLog plot")
-    plt.xlabel("k")
+    plt.xlabel("epsilon")
     plt.ylabel("error")
     plt.legend(["First order approx", "Second order approx"])
+    plt.gca().invert_xaxis()
+
     plt.show()
 
 
@@ -135,22 +139,27 @@ def gradTest(f, w, gradX, sampleVec):
     numOfIter = 8
     epsilon = 0.1
     f_0 = f(w)
-    y_0 = np.zeros(numOfIter)
-    y_1 = np.zeros(numOfIter)
-
+    y_0 = []
+    y_1 = []
+    eps = []
     for k in range(1, numOfIter):
 
         Fk = f(w + epsilon * d)
         F1 = f_0 + epsilon * (d.T @ gradX)
-        y_0[k - 1] = abs(Fk - f_0)
-        y_1[k - 1] = abs(Fk - F1)
-        epsilon = epsilon * pow(1 / 2, k)
+        first = np.abs(Fk-f_0)
+        second = np.abs(Fk-F1)
+        y_0.append(np.abs(Fk - f_0))
+        y_1.append(np.abs(Fk - F1))
+        eps.append(epsilon)
+        epsilon = epsilon * pow(0.5,k)
+
 
     plt.figure()
-    plt.semilogy([i for i in range(1, numOfIter + 1)], y_0)
-    plt.semilogy([i for i in range(1, numOfIter + 1)], y_1)
+    print(f'eps, f1, f2 {eps[5]}, { y_0[5]}, {y_1[5]}')
+    plt.semilogy(eps, y_0)
+    plt.semilogy(eps, y_1)
     plt.title("Successful Grad test in semiLog plot")
-    plt.xlabel("k")
+    plt.xlabel("epsilon")
     plt.ylabel("error")
     plt.legend(["first order approx", "second order approx"])
     plt.show()
@@ -410,9 +419,9 @@ if __name__ == '__main__':
         # leave like this, ill use it later
         gradFunc = lambda w2: LRGradient(w2, testImages, testLabels)
         hessFunc = lambda w_3: LRHessian(testImages, w_3, m)
-        hessianTest(gradFunc, hessFunc, w, d)
+        # hessianTest(gradFunc, hessFunc, w, d)
         gradTest(f, w, gradFunc(w), d)
         ##############################################
-        SD(trainData, trainLabels, testImages, testLabels)
+        # SD(trainData, trainLabels, testImages, testLabels)
 
         print(f'-----Q4 end-----')
