@@ -111,7 +111,7 @@ def LRHessian(X, w, m):
 def hessianTest(gradFunc, hessFunc, w, sampleVec):
     d = sampleVec
     numOfIter = 7
-    epsilon = 0.1
+    epsilon = 1
     fx = gradFunc(w)
     hessVal = hessFunc(w)
     y_0 = []
@@ -126,8 +126,10 @@ def hessianTest(gradFunc, hessFunc, w, sampleVec):
         epsilon = epsilon * 1 / 2
 
     plt.figure()
-    plt.semilogy(eps, y_0)
-    plt.semilogy(eps, y_1)
+    for i in range (len(y_0)):
+        print (y_1[i]/y_0[i])
+    plt.plot(eps, y_0)
+    plt.plot(eps, y_1)
     plt.title("Successful Jacbian test in semiLog plot")
     plt.xlabel("epsilon")
     plt.ylabel("error")
@@ -140,7 +142,7 @@ def hessianTest(gradFunc, hessFunc, w, sampleVec):
 def gradTest(f, w, gradX, sampleVec):
     d = sampleVec
     numOfIter = 8
-    epsilon = 0.1
+    epsilon = 1
     f_0 = f(w)
     y_0 = []
     y_1 = []
@@ -153,7 +155,7 @@ def gradTest(f, w, gradX, sampleVec):
         y_0.append(np.abs(Fk - f_0))
         y_1.append(np.abs(Fk - F1))
         eps.append(epsilon)
-        epsilon = epsilon * pow(0.5, k)
+        epsilon = epsilon * 1/2
 
     plt.figure()
     openy0 = []
@@ -248,14 +250,16 @@ def load(numToTrainOn, dig1, dig2):
     return np.asarray(FilteredTrainImages).T, C, np.asarray(FilteredTestImages).T, results
 
 
-def SD(trainData, trainLabels, testImages, testLabels):
+def SD(trainData, trainLabels, testImages, testLabels, one_zero):
     trainSamples = []
     testSamples = []
     weight = np.asarray([[0]] * 784)
     c1 = np.asarray([trainLabels[0]])
     c2 = np.asarray([trainLabels[1]])
     first = True
+    iter = []
     for i in range(100):
+        iter.append(i)
         # calculating for train
         # print("calculating for train")
         prevW = weight
@@ -276,16 +280,28 @@ def SD(trainData, trainLabels, testImages, testLabels):
     f_test_diffs = []
     n = len(testSamples)
     for i in range(n):
-        f_test_diffs.append(abs(testSamples[i] - testSamples[n - 1]))
-        f_train_diffs.append(abs(trainSamples[i] - trainSamples[n - 1]))
+        f_test_diffs.append(np.abs(testSamples[i] - testSamples[n - 1])[0])
+        f_train_diffs.append(np.abs(trainSamples[i] - trainSamples[n - 1]))
+
+    testDiff = []
+    trainDiff = []
+
+    for i in range(len(f_test_diffs)):
+        testDiff.append(f_test_diffs[i][0])
+        trainDiff.append(f_train_diffs[i][0][0])
 
     plt.figure()
-    plt.semilogy(f_test_diffs)
-    plt.semilogy(f_train_diffs)
-    plt.title("f for test (w^k)-f(w^*)")
+    title = ""
+    if (one_zero):
+        title = "1/0, |f(w)-f(w*)|"
+    else:
+        title = "8/9, |f(w)-f(w*)|"
+    plt.semilogy(iter, testDiff)
+    plt.semilogy(iter, trainDiff)
+    plt.title(title)
     plt.xlabel("iteration")
-    plt.ylabel("diff")
-    plt.legend(["test Diffs", "trainDiffs"])
+    plt.ylabel("value")
+    plt.legend(["test Difference", "train Difference"])
     plt.show()
 
     # TODO Plot both diffs on the same graph. x label is "iterations", y label is "objective value"
@@ -293,15 +309,17 @@ def SD(trainData, trainLabels, testImages, testLabels):
     return weight
 
 
-def newton(trainData, trainLabels, testImages, testLabels):
+def newton(trainData, trainLabels, testImages, testLabels, one_zero):
     trainSamples = []
     testSamples = []
     weight = np.asarray([[0]] * 784)
     c1 = np.asarray([trainLabels[0]])
     c2 = np.asarray([trainLabels[1]])
     m = len(testLabels[0])
+    iter = []
     first = True
     for i in range(100):
+        iter.append(i)
         # calculating for train
         # print("calculating for train")
         prevW = weight
@@ -330,16 +348,27 @@ def newton(trainData, trainLabels, testImages, testLabels):
     f_test_diffs = []
     n = len(testSamples)
     for i in range(n):
-        f_test_diffs.append(abs(testSamples[i] - testSamples[n - 1]))
-        f_train_diffs.append(abs(trainSamples[i] - trainSamples[n - 1]))
+        f_test_diffs.append(np.abs(testSamples[i] - testSamples[n - 1])[0])
+        f_train_diffs.append(np.abs(trainSamples[i] - trainSamples[n - 1]))
 
-    plt.figure()
-    plt.semilogy(f_test_diffs)
-    plt.semilogy(f_train_diffs)
-    plt.title("f for test (w^k)-f(w^*)")
+    testDiff = []
+    trainDiff = []
+
+    for i in range(len(f_test_diffs)):
+        testDiff.append(f_test_diffs[i][0])
+        trainDiff.append(f_train_diffs[i][0][0])
+
+    title = ""
+    if (one_zero):
+        title = "1/0, |f(w)-f(w*)|"
+    else:
+        title = "8/9, |f(w)-f(w*)|"
+    plt.semilogy(iter, testDiff)
+    plt.semilogy(iter, trainDiff)
+    plt.title(title)
     plt.xlabel("iteration")
-    plt.ylabel("diff")
-    plt.legend(["test Diffs", "trainDiffs"])
+    plt.ylabel("value")
+    plt.legend(["test Difference", "train Difference"])
     plt.show()
 
     # TODO Plot both diffs on the same graph. x label is "iterations", y label is "objective value"
@@ -362,10 +391,51 @@ def armijo(weight, objectiveF, gradF, direction):
 
     return alpha
 
+def eranTest(f, w, sampleVec):
+    d = sampleVec
+    numOfIter = 8
+    epsilon = 1
+    gradX = w
+    f_0 = f(w)
+    y_0 = []
+    y_1 = []
+    eps = []
+    iter = []
+    for k in range(numOfIter):
+        Fk = f(w + epsilon * d)
+        F1 = f_0 + epsilon * np.dot(np.reshape(d,len(d)) , np.reshape(gradX,len(gradX)))
+        first = np.abs(Fk - f_0)
+        second = np.abs(Fk - F1)
+        y_0.append(np.abs(Fk - f_0))
+        y_1.append(np.abs(Fk - F1))
+        eps.append(epsilon)
+        epsilon = epsilon * pow(1/2,k)
+        iter.append(k)
+    plt.figure()
+    openy0 = []
+    openy1 = []
+
+    # for i in range(len(y_0)):
+    #     openy0.append(y_0[i][0][0])
+    #     openy1.append(y_1[i][0][0])
+    plt.semilogy(iter, y_0)
+    plt.semilogy(iter, y_1)
+    plt.title("eran test")
+    plt.xlabel("epsilon")
+    plt.ylabel("error")
+    plt.legend(["first order approx", "second order approx"])
+    # plt.gca().invert_xaxis()
+    plt.show()
+
+
+
+def eranFunc(x):
+    x = np.reshape(x, 784)
+    return 1/2 * np.dot(x,x)
 
 def testConverge(weight, prevW):
     normsOutput = np.linalg.norm(weight - prevW) / np.linalg.norm(prevW)
-    return normsOutput < 0.0001
+    return normsOutput < 0.001
 
 
 if __name__ == '__main__':
@@ -387,6 +457,9 @@ if __name__ == '__main__':
         plt.figure()
         plt.plot(x, y)
         plt.plot(x, f)
+        plt.title("Original F")
+        plt.xlabel("x")
+        plt.ylabel("y")
         plt.show()
 
         # our part
@@ -395,6 +468,10 @@ if __name__ == '__main__':
         plt.figure()
         plt.plot(xLS)
         plt.plot(xIRLS)
+        plt.title("Approx F")
+        plt.legend(["LS", "IRLS"])
+        plt.xlabel("x")
+        plt.ylabel("y")
         plt.show()
         print(f'-----Q2 end-----')
 
@@ -405,7 +482,7 @@ if __name__ == '__main__':
 
     if (Q4):
         print(f'-------Q4:------')
-        testImages, testLabels, trainData, trainLabels = load(30000, 0, 1)
+        testImages, testLabels, trainData, trainLabels = load(30000, 8, 9)
 
         ##############################################################
         # test section, delete when done
@@ -427,7 +504,9 @@ if __name__ == '__main__':
         hessFunc = lambda w_3: LRHessian(testImages, w_3, m)
         hessianTest(gradFunc, hessFunc, w, d)
         gradTest(f, w, gradFunc(w), d)
+        # eranTest(eranFunc, w, d)
         ##############################################
-        # SD(trainData, trainLabels, testImages, testLabels)
+        SD(trainData, trainLabels, testImages, testLabels , False)
+        newton(trainData, trainLabels, testImages, testLabels, False)
 
         print(f'-----Q4 end-----')
